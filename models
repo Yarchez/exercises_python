@@ -1,0 +1,78 @@
+import locale
+from peewee import (
+    CharField,
+    AutoField,
+    ForeignKeyField,
+    DateTimeField,
+    IntegerField,
+    Model,
+    SqliteDatabase,
+)
+
+import datetime
+
+
+db = SqliteDatabase('exercises.db')
+
+
+class BaseModel(Model):
+    class Meta:
+        database = db
+
+
+class Exercises(BaseModel):
+    id = AutoField(primary_key=True)
+    name = CharField()
+    description = CharField()
+    repetitions_per_set = IntegerField(null=True)
+    cnt_sets = IntegerField(null=True)
+    created_at = DateTimeField(default=datetime.datetime.now)
+
+    def __str__(self):
+        locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+        text = (
+            f"Название: {self.name}\n"
+            f"Описание: {self.description}\n"
+            f"Колличество повторений в подходе: {self.repetitions_per_set}\n"
+            f"Колличество подходов: {self.cnt_sets}\n"
+        )
+        return text
+
+
+class Goals(BaseModel):
+    id = AutoField(primary_key=True)
+    exercise = ForeignKeyField(Exercises, backref='goals')
+    target = IntegerField()
+    goal_created_at = DateTimeField(default=datetime.datetime.now)
+
+    def __str__(self):
+        text = (
+            f"Упражнение: {self.exercise.name}\n"
+            f"Целевой показатель: {self.target}\n"
+            f"Дата создания цели: {self.goal_created_at}\n"
+        )
+        return text
+
+
+class Activity(BaseModel):
+    id = AutoField(primary_key=True)
+    exercise = ForeignKeyField(Exercises, backref='goals')
+    cnt_sets = IntegerField(null=True)
+    max_result = IntegerField()
+    activity_date = DateTimeField(default=datetime.datetime.now)
+
+    def __str__(self):
+        text = (
+            f"\nУпражнение: {self.exercise.name}\n"
+            f"Колличество подходов: {self.cnt_sets}\n"
+            f"Лучший результат: {self.max_result}\n"
+            f"Дата выполнения: {self.activity_date}"
+        )
+        return text
+
+
+def create_models():
+    db.create_tables(BaseModel.__subclasses__())
+
+
+create_models()
